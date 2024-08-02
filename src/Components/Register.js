@@ -1,6 +1,13 @@
 import axios from 'axios';
 import React, { useState } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
+import Navbar from './Navbar';
+import { useNavigate } from 'react-router-dom';
+
+
+
+
+
 
 const Register = () => {
   const [user, setUser] = useState({
@@ -8,8 +15,11 @@ const Register = () => {
     password: "",
     phone: "",
     email: "",
-    userType: ""
+    userType: "",
+    profileImage: ""
   });
+
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,6 +36,7 @@ const Register = () => {
   return (
     <div>
       <Toaster />
+      <Navbar/>
       <section className="vh-100 bg-image">
         <div className="mask d-flex align-items-center h-100 gradient-custom-3">
           <div className="container h-100">
@@ -85,6 +96,19 @@ const Register = () => {
                           required
                         />
                       </div>
+
+                      <div className="form-outline mb-4">
+                  <input
+                  type="file"
+                  value={user.profileImage}
+                  onChange={(e) => setUser({ ...user, profileImage: e.target.value })}
+                  className="form-control form-control-lg"
+                  
+                  accept="image/*"
+                  
+              />
+              </div> 
+
                       <div className="d-flex justify-content-center">
                         <button type="submit" className="btn btn-success btn-block btn-lg gradient-custom-4 text-body">Register</button>
                       </div>

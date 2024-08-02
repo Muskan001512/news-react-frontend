@@ -5,100 +5,133 @@ import { Link } from 'react-router-dom';
 import { Toaster, toast } from 'react-hot-toast';
 import '../App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import 'bootstrap/dist/js/bootstrap.bundle.min';
+import 'bootstrap/dist/js/bootstrap.bundle.min'; // Ensure Bootstrap JS is included
 import OwlCarousel from 'react-owl-carousel';
 import 'owl.carousel/dist/assets/owl.carousel.css';
 import 'owl.carousel/dist/assets/owl.theme.default.css';
+import Navbar from './Navbar';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faYoutube } from '@fortawesome/free-brands-svg-icons';
 import $ from 'jquery';
-import logo from '../img/core-img/logo.png';
-import add from '../img/bg-img/add.png';
-import img1 from '../img/bg-img/1.jpg';
-import img2 from '../img/bg-img/2.jpg';
-import img3 from '../img/bg-img/3.jpg';
-import img11 from '../img/bg-img/11.jpg';
-import img12 from '../img/bg-img/12.jpg';
-import img13 from '../img/bg-img/13.jpg';
+
 
 const Home = () => {
   const [newsArticles, setNewsArticles] = useState([]);
   const [userId, setUserId] = useState(null);
   const [userRole, setUserRole] = useState(null);
-  const userd_id = getCookie('user._id');
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [selectedVideo, setSelectedVideo] = useState(null);
+  const articlesPerPage = 3;
+
+  useEffect(() => {
+    if ($.fn.owlCarousel) {
+      const videoSlides = $('.video-slides');
+      videoSlides.owlCarousel({
+        items: 3,
+        margin: 30,
+        loop: true,
+        dots: false,
+        autoplay: true,
+        nav: true,
+        navText: ['<i class="fa fa-angle-left"></i>', '<i class="fa fa-angle-right"></i>'],
+        responsive: {
+          0: { items: 1 },
+          576: { items: 2 },
+          992: { items: 3 },
+        }
+      });
+    }
+  }, [newsArticles]);
+  const user_id = getCookie('user._id');
+  console.log(user_id);
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this news article?')) {
+      const accessToken = getCookie('accessToken');
+      try {
+        await axios.delete(`http://localhost:3000/api/news/newsdelete/${id}`, {
+          headers: { 'Authorization': `Bearer ${accessToken}` }
+        });
+        toast.success("News article deleted successfully");
+        window.location.reload();
+      } catch (error) {
+        console.error('Error deleting article:', error);
+        toast.error("Failed to delete news article");
+      }
+    }
+  };
 
   useEffect(() => {
     const fetchNews = async () => {
       const user = getCookie('user');
-      console.log("user here", user);
-
       try {
         if (user) {
           setUserId(user._id);
-          if (user.userRole === 'Admin') {
-            setUserRole('Admin');
-            console.log('I am admin', userRole);
+          if (user.role === 'admin') {
+            setUserRole('admin');
           }
-        } else {
-          console.log('No user found in cookies');
         }
-        console.log('userId:', userId, userRole);
-        console.log('user constant id:', userd_id);
 
         const response = await axios.get('http://localhost:3000/api/news/getnews', {
-          headers: {
-            'Authorization': `Bearer ${getCookie('accessToken')}`
-          }
+          headers: { 'Authorization': `Bearer ${getCookie('accessToken')}` }
         });
         const data = response.data;
+        console.log("response article", response.data);
         if (Array.isArray(data)) {
           setNewsArticles(data);
         } else {
-          console.error('Unexpected response format:', data);
           setNewsArticles([]);
         }
-        console.log(response.data);
       } catch (error) {
         console.error('Error fetching news:', error);
       }
     };
 
     fetchNews();
-  }, [userId, userRole]);
+  }, []);
 
   useEffect(() => {
-    if ($.fn.simpleTicker) {
-      $.simpleTicker($("#breakingNewsTicker"), {
-        speed: 1000,
-        delay: 3000,
-        easing: 'swing',
-        effectType: 'roll'
-      });
-    }
+    const interval = setInterval(() => {
+      setCurrentIndex((prevIndex) => (prevIndex + 1) % Math.ceil(newsArticles.length / articlesPerPage));
+    }, 5000);
+
+    return () => clearInterval(interval);
   }, [newsArticles]);
 
-  const mostRecentArticle = newsArticles[0];
+  const startIndex = currentIndex * articlesPerPage;
+  const endIndex = startIndex + articlesPerPage;
+  const displayedArticles = newsArticles.slice(startIndex, endIndex);
+
+  const handleVideoClick = (videoUrl) => {
+    const fullVideoUrl = `http://localhost:3000/${videoUrl}`;
+    setSelectedVideo(fullVideoUrl);
+    const videoModal = new window.bootstrap.Modal(document.getElementById('videoModal'));
+    videoModal.show();
+  };
 
   return (
     <>
       <Toaster />
-      {/* Breaking News Area Start */}
+      <Navbar />
+
       <section className="breaking-news-area">
         <div className="container-fluid">
           <div className="row">
             <div className="col-12">
               <div className="breaking-news-ticker d-flex flex-wrap align-items-center">
-                <div className="title">
-                  <h6>Trending</h6>
-                </div>
-                <div>
-                  <ul id="breakingNewsTicker">
-                    {mostRecentArticle && (
-                      <li>
-                        <a href="#" className="trending-news">
-                          {mostRecentArticle.title}
-                        </a>
-                      </li>
+                <div className="title"><h6>Trending</h6></div>
+                <div className="marquee-container">
+                  <div className="marquee">
+                    {newsArticles.length > 0 ? (
+                      newsArticles.map((article, index) => (
+                        <div key={index} className="marquee-item">
+                          <Link to={`/news/${article._id}`} className="trending-news">{article.title}</Link>
+                        </div>
+                      ))
+                    ) : (
+                      <div>No trending news available</div>
                     )}
-                  </ul>
+                  </div>
                 </div>
               </div>
             </div>
@@ -106,77 +139,166 @@ const Home = () => {
         </div>
       </section>
 
-      {/* All News Start */}
-      <div className="single-slide">
-        <div className="container-fluid">
-          <div className="row">
-            {newsArticles.map((article) => (
-              <div key={article._id} className="col-12 col-md-3">
-                <div className="single-blog-post style-1" data-animation="fadeInUpBig" data-delay="100ms" data-duration="1000ms">
-                  <div className="blog-thumbnail bg-overlay">
-                    <a href="#">
-                      <img src={`http://localhost:3000/${article.image}`} alt={article.title} />
-                    </a>
+      <div className="container-fluid">
+        <div className="row">
+          {displayedArticles.length > 0 && (
+            <>
+              <div className="col-md-6">
+                <div className="card mb-3" style={{ width: '100%' }}>
+                  <Link to={`/news/${displayedArticles[0]._id}`}>
+                    <img
+                      className="card-img-top"
+                      src={`http://localhost:3000/${displayedArticles[0].image}`}
+                      alt={displayedArticles[0].title}
+                      style={{ width: '699px', height: '630px', objectFit: 'cover' }}
+                    />
+                  </Link>
+                  <div className="card-body">
+                    <Link to={`/news/${displayedArticles[0]._id}`}>
+                      <h5 className="card-title">{displayedArticles[0].title}</h5>
+                    </Link>
+                    <p className="card-text">{displayedArticles[0].content}</p>
                   </div>
-                  <div className="blog-content">
-                    <span className="post-date">{new Date(article.date).toLocaleDateString()}</span>
-                    <a href="#" className="post-title">
-                      {article.title}
-                    </a>
+                  <div className="card-footer">
+                    <small className="text-muted">{new Date(displayedArticles[0].date).toLocaleDateString()}</small>
                   </div>
+                  {userRole === 'admin' && (
+                    <div className="d-flex justify-content-start mt-2">
+                      <Link className="btn btn-success me-2" to={`/editnews/${displayedArticles[0]._id}`}>
+                        Edit <i className="fa fa-edit ms-1"></i>
+                      </Link>
+                      <button className="btn btn-danger" onClick={() => handleDelete(displayedArticles[0]._id)}>
+                        Delete <i className="fa fa-trash ms-1"></i>
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
-            ))}
+              <div className="col-md-6">
+                {displayedArticles.slice(1, 3).map((article) => (
+                  <div key={article._id} className="card mb-3" style={{ width: '100%' }}>
+                    <Link to={`/news/${article._id}`}>
+                      <img
+                        className="card-img-top"
+                        src={`http://localhost:3000/${article.image}`}
+                        alt={article.title}
+                        style={{ width: '699px', height: '300px', objectFit: 'cover' }}
+                      />
+                    </Link>
+                    <div className="card-body">
+                      <Link to={`/news/${article._id}`}>
+                        <h5 className="card-title">{article.title}</h5>
+                      </Link>
+                      <p className="card-text">{article.content}</p>
+                    </div>
+                    <div className="card-footer">
+                      <small className="text-muted">{new Date(article.date).toLocaleDateString()}</small>
+                    </div>
+                    {userRole === 'admin' && (
+                      <div className="d-flex justify-content-start mt-2">
+                        <Link className="btn btn-success me-2" to={`/editnews/${article._id}`}>
+                          Edit <i className="fa fa-edit ms-1"></i>
+                        </Link>
+                        <button className="btn btn-danger" onClick={() => handleDelete(article._id)}>
+                          Delete <i className="fa fa-trash ms-1"></i>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+      <div className="video-slideshow py-5">
+        <div className="container">
+          <div className="row">
+            <div className="col-12">
+              <OwlCarousel
+                className="owl-theme video-slides"
+                loop
+                margin={30}
+                dots={false}
+                autoplay
+                nav
+                navText={[
+                  '<i class="fa fa-angle-left"></i>',
+                  '<i class="fa fa-angle-right"></i>',
+                ]}
+                responsive={{
+                  0: { items: 1 },
+                  576: { items: 2 },
+                  992: { items: 3 },
+                }}
+              >
+                {newsArticles.map((article) => (
+                  <div className="single-blog-post style-3" key={article._id}>
+                    <div className="blog-thumbnail">
+                      <a href="#">
+                        <img src={`http://localhost:3000/${article.image}`} alt={article.title}
+                        style={{ width: '412px', height: '274px', objectFit: 'cover' }} />
+                      </a>
+                      {article.video && (
+                        <a
+                          href="#"
+                          className="video-btn"
+                          onClick={(e) => {
+                            e.preventDefault(); // Prevent default link behavior
+                            handleVideoClick(article.video);
+                            console.log("video", article.video);
+                          }}
+                        >
+                          <FontAwesomeIcon icon={faYoutube} />
+                        </a>
+                        
+                      )}
+                      {userRole === 'admin' && (
+                    <div className="d-flex justify-content-start mt-2">
+                      <Link className="btn btn-success me-2" to={`/editnews/${displayedArticles[0]._id}`}>
+                        Edit <i className="fa fa-edit ms-1"></i>
+                      </Link>
+                      <button className="btn btn-danger" onClick={() => handleDelete(displayedArticles[0]._id)}>
+                        Delete <i className="fa fa-trash ms-1"></i>
+                      </button>
+                    </div>
+                  )}
+                    </div>
+                    <div className="blog-content">
+                      <span className="post-date">{new Date(article.date).toLocaleDateString()}</span>
+                      <p className="post-title">{article.title}</p>
+                      <Link to={`/news/${article._id}`} className="read-more">Read More</Link>
+
+                    </div>
+                  </div>
+                ))}
+              </OwlCarousel>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Slider Start */}
-      <OwlCarousel className="owl-theme" loop margin={10} nav>
-        <div className="single-blog-post style-3">
-          <div className="blog-thumbnail">
-            <a href="#"><img src={img11} alt="" /></a>
-          </div>
-          <div className="blog-content">
-            <span className="post-date">June 20, 2018</span>
-            <p className="post-title">Elon Musk: Tesla worker admitted to sabotage</p>
-          </div>
-        </div>
-        <div className="single-blog-post style-3">
-          <div className="blog-thumbnail">
-            <a href="#"><img src={img12} alt="" /></a>
-          </div>
-          <div className="blog-content">
-            <span className="post-date">June 20, 2018</span>
-            <p className="post-title">Rachel Smith breaks down while discussing border crisis</p>
-          </div>
-        </div>
-        <div className="single-blog-post style-3">
-          <div className="blog-thumbnail">
-            <a href="#"><img src={img13} alt="" /></a>
-          </div>
-          <div className="blog-content">
-            <span className="post-date">June 20, 2018</span>
-            <p className="post-title">Dow falls 287 points as trade war fears escalate</p>
-            <a href="#" className="post-author">By Michael Smith</a>
-          </div>
-        </div>
-      </OwlCarousel>
-
-      {/* Admin News Form */}
-      {userRole === 'Admin' && (
-        <div className="container-fluid">
-          <div className="row">
-            <div className="col-12">
-              <h2>Admin News Management</h2>
-              <form>
-                {/* Add form fields for creating, updating, and deleting news articles */}
-                <button type="button" className="btn btn-primary">Post News Article</button>
-              </form>
+      <div className="modal fade" id="videoModal" tabIndex="-1" aria-labelledby="videoModalLabel" aria-hidden="true">
+        <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title" id="videoModalLabel">Video</h5>
+              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div className="modal-body">
+              {selectedVideo && (
+                <video width="100%" controls>
+                  <source src={selectedVideo} type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
           </div>
         </div>
-      )}
+      </div>
     </>
   );
 };

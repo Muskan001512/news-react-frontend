@@ -2,6 +2,9 @@ import axios from 'axios';
 import React, { useState } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import { getCookie, setCookie } from '../utility/cookieUtils';
+import Navbar from './Navbar';
+
 
 const Login = () => {
   const [user, setUser] = useState({
@@ -16,18 +19,33 @@ const Login = () => {
     try {
       const response = await axios.post('http://localhost:3000/api/users/login', user);
       console.log("response", response);
-      toast.success('Login successful');
-      navigate('/'); // Redirect to home page
+      
+      const { data } = response; // Destructure data from response
+      console.log(data);
+  
+      if (data && data.user && data.accessToken && data.refreshToken) {
+        const { user, accessToken, refreshToken } = data;
+        setCookie('user', JSON.stringify(user), { maxAge: 3600 }); // Convert user object to JSON string
+        setCookie('accessToken', accessToken, { maxAge: 3600 }); // Set cookie for 1 hour
+        setCookie('refreshToken', refreshToken, { maxAge: 3600 }); // Set cookie for 1 hour
+  
+        toast.success('Login successful');
+        navigate('/'); // Redirect to home page
+      } else {
+        throw new Error('Invalid response structure');
+      }
     } catch (error) {
       console.error('Error logging in:', error);
       toast.error('Invalid credentials');
     }
   };
+  
 
   return (
     <div>
       <Toaster />
       <section className="vh-100 bg-image">
+      <Navbar />
         <div className="mask d-flex align-items-center h-100 gradient-custom-3">
           <div className="container h-100">
             <div className="row d-flex justify-content-center align-items-center h-100">
