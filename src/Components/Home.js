@@ -13,15 +13,30 @@ import Navbar from './Navbar';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faYoutube } from '@fortawesome/free-brands-svg-icons';
 import $ from 'jquery';
+import VideoModal from '../pages/VideoModel';
+import img2 from '../img/bg-img/add2.png'; // Corrected import statement
+
 
 
 const Home = () => {
   const [newsArticles, setNewsArticles] = useState([]);
+    const [advertisements, setAdvertisements] = useState([]); // State for advertisements
+    const [addIndex, setaddIndex] = useState(0);
+
   const [userId, setUserId] = useState(null);
   const [userRole, setUserRole] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedVideo, setSelectedVideo] = useState(null);
+  const [showVideoModal, setShowVideoModal] = useState(false); 
   const articlesPerPage = 3;
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setaddIndex((prevIndex) => (prevIndex + 1) % advertisements.length);
+    }, 5000); // 10 seconds
+
+    return () => clearInterval(intervalId);
+  }, [advertisements]);
 
   useEffect(() => {
     if ($.fn.owlCarousel) {
@@ -43,7 +58,7 @@ const Home = () => {
     }
   }, [newsArticles]);
   const user_id = getCookie('user._id');
-  console.log(user_id);
+  // console.log(user_id);
 
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this news article?')) {
@@ -90,6 +105,26 @@ const Home = () => {
     fetchNews();
   }, []);
 
+
+  useEffect(() => {
+    const fetchAdvertisements = async () => {
+      try {
+        const response = await axios.get('http://localhost:3000/api/advertise/alladvertise');
+        const data = response.data;
+        console.log("response advertisements", data);
+        if (Array.isArray(data)) {
+          setAdvertisements(data);
+        } else {
+          setAdvertisements([]);
+        }
+      } catch (error) {
+        console.error('Error fetching advertisements:', error);
+      }
+    };
+
+    fetchAdvertisements();
+  }, []);
+
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentIndex((prevIndex) => (prevIndex + 1) % Math.ceil(newsArticles.length / articlesPerPage));
@@ -104,9 +139,13 @@ const Home = () => {
 
   const handleVideoClick = (videoUrl) => {
     const fullVideoUrl = `http://localhost:3000/${videoUrl}`;
+    console.log("url",fullVideoUrl);
     setSelectedVideo(fullVideoUrl);
-    const videoModal = new window.bootstrap.Modal(document.getElementById('videoModal'));
-    videoModal.show();
+    setShowVideoModal(true); // Show the modal
+  };
+
+  const handleCloseVideoModal = () => {
+    setShowVideoModal(false); // Hide the modal
   };
 
   return (
@@ -150,7 +189,7 @@ const Home = () => {
                       className="card-img-top"
                       src={`http://localhost:3000/${displayedArticles[0].image}`}
                       alt={displayedArticles[0].title}
-                      style={{ width: '699px', height: '630px', objectFit: 'cover' }}
+                      style={{ width: '699px', height: '552px', objectFit: 'cover' }}
                     />
                   </Link>
                   <div className="card-body">
@@ -165,10 +204,10 @@ const Home = () => {
                   {userRole === 'admin' && (
                     <div className="d-flex justify-content-start mt-2">
                       <Link className="btn btn-success me-2" to={`/editnews/${displayedArticles[0]._id}`}>
-                        Edit <i className="fa fa-edit ms-1"></i>
+                        Edit 
                       </Link>
                       <button className="btn btn-danger" onClick={() => handleDelete(displayedArticles[0]._id)}>
-                        Delete <i className="fa fa-trash ms-1"></i>
+                        Delete 
                       </button>
                     </div>
                   )}
@@ -182,7 +221,7 @@ const Home = () => {
                         className="card-img-top"
                         src={`http://localhost:3000/${article.image}`}
                         alt={article.title}
-                        style={{ width: '699px', height: '300px', objectFit: 'cover' }}
+                        style={{ width: '699px', height: '264px', objectFit: 'cover' }}
                       />
                     </Link>
                     <div className="card-body">
@@ -197,10 +236,10 @@ const Home = () => {
                     {userRole === 'admin' && (
                       <div className="d-flex justify-content-start mt-2">
                         <Link className="btn btn-success me-2" to={`/editnews/${article._id}`}>
-                          Edit <i className="fa fa-edit ms-1"></i>
+                          Edit 
                         </Link>
                         <button className="btn btn-danger" onClick={() => handleDelete(article._id)}>
-                          Delete <i className="fa fa-trash ms-1"></i>
+                          Delete 
                         </button>
                       </div>
                     )}
@@ -215,22 +254,22 @@ const Home = () => {
         <div className="container">
           <div className="row">
             <div className="col-12">
-              <OwlCarousel
-                className="owl-theme video-slides"
-                loop
-                margin={30}
-                dots={false}
-                autoplay
-                nav
-                navText={[
-                  '<i class="fa fa-angle-left"></i>',
-                  '<i class="fa fa-angle-right"></i>',
-                ]}
-                responsive={{
-                  0: { items: 1 },
-                  576: { items: 2 },
-                  992: { items: 3 },
-                }}
+            <OwlCarousel
+  className="video-slides"
+  loop
+  margin={50}
+  dots={false}
+  autoplay
+  nav
+  navText={[
+    '<i class="fa fa-chevron-left"></i>',  // Left arrow icon
+    '<i class="fa fa-chevron-right"></i>'  // Right arrow icon
+  ]}
+  responsive={{
+    0: { items: 1 },
+    576: { items: 2 },
+    992: { items: 3 },
+  }}
               >
                 {newsArticles.map((article) => (
                   <div className="single-blog-post style-3" key={article._id}>
@@ -246,7 +285,7 @@ const Home = () => {
                           onClick={(e) => {
                             e.preventDefault(); // Prevent default link behavior
                             handleVideoClick(article.video);
-                            console.log("video", article.video);
+                            console.log("video----?>", article.video);
                           }}
                         >
                           <FontAwesomeIcon icon={faYoutube} />
@@ -256,10 +295,10 @@ const Home = () => {
                       {userRole === 'admin' && (
                     <div className="d-flex justify-content-start mt-2">
                       <Link className="btn btn-success me-2" to={`/editnews/${displayedArticles[0]._id}`}>
-                        Edit <i className="fa fa-edit ms-1"></i>
+                        Edit 
                       </Link>
                       <button className="btn btn-danger" onClick={() => handleDelete(displayedArticles[0]._id)}>
-                        Delete <i className="fa fa-trash ms-1"></i>
+                        Delete 
                       </button>
                     </div>
                   )}
@@ -278,28 +317,37 @@ const Home = () => {
         </div>
       </div>
 
-      <div className="modal fade" id="videoModal" tabIndex="-1" aria-labelledby="videoModalLabel" aria-hidden="true">
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title" id="videoModalLabel">Video</h5>
-              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div className="modal-body">
-              {selectedVideo && (
-                <video width="100%" controls>
-                  <source src={selectedVideo} type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video>
-              )}
-            </div>
-            <div className="modal-footer">
-              <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-          </div>
-        </div>
+       {/* Video Modal */}
+       <VideoModal
+        show={showVideoModal}
+        handleClose={handleCloseVideoModal}
+        videoUrl={selectedVideo}
+      />
+
+      {/* Advertisement section */}
+
+      <div className="big-add-area mb-100">
+      <span className="text-ad">Advertisement</span>
+      <div className="container-fluid">
+        {advertisements.length > 0 ? (
+          <a
+            href={advertisements[addIndex]?.link}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <img
+              src={`http://localhost:3000/uploads/${advertisements[addIndex]?.image}`}
+              alt="Advertisement"
+              style={{ width: '1321px', height: '186px', objectFit: 'cover' }}
+            />
+          </a>
+        ) : (
+          <p>No advertisements available.</p>
+        )}
       </div>
+    </div>
     </>
+  
   );
 };
 

@@ -31,9 +31,9 @@ a:focus {
   transition-duration: 500ms;
   text-decoration: none;
   outline: 0 solid transparent;
-  color: #000000;
+  color: #501515;
   font-weight: 600;
-  font-size: 16px;
+  font-size: 18px;
   font-family: "Raleway", sans-serif; }
 
 ul,
@@ -1671,4 +1671,40 @@ img {
 
 .edit-card{
   margin-top: -34px 
+}
+
+li.nav-item.text-end.create-btncat {
+  list-style: none;
+}
+
+button.close.category {
+  margin-left: 297px;
+  width: 16px;
+}
+
+.owl-nav .owl-prev {
+  left: -50px;
+  z-index: 10;
+}
+
+.owl-nav .owl-next {
+ 
+  right: -50px;
+  z-index: 10;
+}
+
+.owl-nav .fa-chevron-left, .owl-nav .fa-chevron-right {
+  font-size: 34px; /* Adjust the size as needed */
+  color: #c51b1b;     /* Adjust the color as needed */
+}
+
+
+span.text-ad {
+  display: block;
+  text-align: center;
+  width: 100%;
+}
+
+section.breaking-news-area {
+  margin-top: 60px;
 }

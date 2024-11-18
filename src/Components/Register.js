@@ -4,11 +4,6 @@ import toast, { Toaster } from 'react-hot-toast';
 import Navbar from './Navbar';
 import { useNavigate } from 'react-router-dom';
 
-
-
-
-
-
 const Register = () => {
   const [user, setUser] = useState({
     username: "",
@@ -19,10 +14,65 @@ const Register = () => {
     profileImage: ""
   });
 
+  const [errors, setErrors] = useState({
+    username: "",
+    password: "",
+    phone: "",
+    email: "",
+    profileImage: ""
+  });
+
+
+ const validate = () => {
+    let isValid = true;
+    const newErrors = {};
+
+    // Validate username
+    if (!user.username) {
+      newErrors.username = "Username is required";
+      isValid = false;
+    }
+
+    // Validate password
+    if (!user.password) {
+      newErrors.password = "Password is required";
+      isValid = false;
+    } else if (user.password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
+      isValid = false;
+    }
+  
+
+   // Validate phone number
+   const phonePattern = /^[0-9]{10}$/;
+   if (!user.phone || !phonePattern.test(user.phone)) {
+      newErrors.phone = "Valid phone number is required";
+     isValid = false;
+   }
+
+   // Validate email
+   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+   if (!user.email || !emailPattern.test(user.email)) {
+     newErrors.email = "Valid email is required";
+     isValid = false;
+   }
+
+    // Validate profile image
+    if (user.profileImage && user.profileImage.size > 2000000) {
+      newErrors.profileImage = "File size should be less than 2MB";
+      isValid = false;
+    }
+
+  
+    setErrors(newErrors);
+    return isValid;
+  };
+
 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validate()) return;
     try {
       const response = await axios.post('http://localhost:3000/api/users/register', user);
       console.log("response", response);
@@ -33,10 +83,19 @@ const Register = () => {
     }
   };
 
+  const handleChange = (e) => {
+    const { name, value, type, files } = e.target;
+    setUser(prevUser => ({
+      ...prevUser,
+      [name]: type === 'file' ? files[0] : value
+    }));
+  };
+
   return (
-    <div>
+    
+     <div>
       <Toaster />
-      <Navbar/>
+      <Navbar />
       <section className="vh-100 bg-image">
         <div className="mask d-flex align-items-center h-100 gradient-custom-3">
           <div className="container h-100">
@@ -49,66 +108,58 @@ const Register = () => {
                       <div className="form-outline mb-4">
                         <input
                           type="text"
+                          name="username"
                           value={user.username}
-                          onChange={(e) => setUser({ ...user, username: e.target.value })}
+                          onChange={handleChange}
                           className="form-control form-control-lg"
                           placeholder="Username"
-                          required
                         />
+                        {errors.username && <small className="text-danger">{errors.username}</small>}
                       </div>
                       <div className="form-outline mb-4">
                         <input
                           type="password"
+                          name="password"
                           value={user.password}
-                          onChange={(e) => setUser({ ...user, password: e.target.value })}
+                          onChange={handleChange}
                           className="form-control form-control-lg"
                           placeholder="Password"
-                          required
                         />
+                        {errors.password && <small className="text-danger">{errors.password}</small>}
                       </div>
                       <div className="form-outline mb-4">
                         <input
                           type="tel"
+                          name="phone"
                           value={user.phone}
-                          onChange={(e) => setUser({ ...user, phone: e.target.value })}
+                          onChange={handleChange}
                           className="form-control form-control-lg"
                           placeholder="Phone"
-                          required
                         />
+                        {errors.phone && <small className="text-danger">{errors.phone}</small>}
                       </div>
                       <div className="form-outline mb-4">
                         <input
                           type="email"
+                          name="email"
                           value={user.email}
-                          onChange={(e) => setUser({ ...user, email: e.target.value })}
+                          onChange={handleChange}
                           className="form-control form-control-lg"
                           placeholder="Email"
-                          required
                         />
+                        {errors.email && <small className="text-danger">{errors.email}</small>}
                       </div>
                       <div className="form-outline mb-4">
+                      <label htmlFor="homepage">Profile Image:</label>
                         <input
-                          type="text"
-                          value={user.userType}
-                          onChange={(e) => setUser({ ...user, userType: e.target.value })}
+                          type="file"
+                          name="profileImage"
+                          onChange={handleChange}
                           className="form-control form-control-lg"
-                          placeholder="User Type"
-                          required
+                          accept="image/*"
                         />
+                        {errors.profileImage && <small className="text-danger">{errors.profileImage}</small>}
                       </div>
-
-                      <div className="form-outline mb-4">
-                  <input
-                  type="file"
-                  value={user.profileImage}
-                  onChange={(e) => setUser({ ...user, profileImage: e.target.value })}
-                  className="form-control form-control-lg"
-                  
-                  accept="image/*"
-                  
-              />
-              </div> 
-
                       <div className="d-flex justify-content-center">
                         <button type="submit" className="btn btn-success btn-block btn-lg gradient-custom-4 text-body">Register</button>
                       </div>

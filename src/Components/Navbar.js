@@ -12,11 +12,13 @@ const Navbar = () => {
   const [userName, setUserName] = useState(null);
   const [userRole, setUserRole] = useState(null);
 
+  const [isOpen, setIsOpen] = useState(false);
+
+  const toggleNavbar = () => setIsOpen(!isOpen);
+
   const logout = async (e) => {
     try {
-      const response = await axios.post(
-        'http://localhost:3000/api/users/logout'
-      );
+      const response = await axios.post('http://localhost:3000/api/users/logout');
       toast.success(response.data.message);
       setUserId(null);
       removeCookie('user');
@@ -42,7 +44,6 @@ const Navbar = () => {
     const handleScroll = () => {
       if (window.scrollY >= sticky + navbarHeight) {
         navbarSticky.classList.add("sticky");
-        // document.body.style.paddingTop = navbarHeight + 'px';
       } else {
         navbarSticky.classList.remove("sticky");
         document.body.style.paddingTop = '0';
@@ -58,50 +59,66 @@ const Navbar = () => {
 
   return (
     <div>
-      <nav className="navbar navbar-expand-lg navbar-light bg-light mb-5" id="navbar_sticky">
+      <Toaster />
+      <nav className="navbar fixed-top navbar-expand-lg navbar-light bg-light mb-5" id="navbar_sticky">
         <a href="/" className="navbar-brand">
           <img src={logo} alt="Logo" />
         </a>
-        <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarToggleExternalContent" aria-controls="navbarToggleExternalContent" aria-expanded="false" aria-label="Toggle navigation">
+        <button
+          className="navbar-toggler"
+          type="button"
+          onClick={toggleNavbar}
+          aria-controls="navbarSupportedContent"
+          aria-expanded={isOpen}
+          aria-label="Toggle navigation"
+        >
           <span className="navbar-toggler-icon"></span>
         </button>
-
-        <div className="collapse navbar-collapse" id="navbarSupportedContent">
+        <div className={`collapse navbar-collapse ${isOpen ? 'show' : ''}`} id="navbarSupportedContent">
           <ul className="navbar-nav ms-auto fs-6 fw-bold">
-          {userRole === 'admin' && (
+            {userRole === 'admin' && (
               <>
-                
-                <li className="nav-item">
-                  <span className="navbar-text admin-title">Admin News Management</span>
-                </li>
-                <li className="nav-item">
-                  <button className="btn btn-primary" onClick={() => navigate('/createNews')}>Create News</button>
+                <li className="nav-item dropdown">
+                  <Link className="nav-link dropdown-toggle" to="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    Admin
+                  </Link>
+                  <ul className="dropdown-menu" aria-labelledby="navbarDropdown">
+                    <li><Link className="dropdown-item" to="/createNews">Create Post</Link></li>
+                    <li><Link className="dropdown-item" to="/categorylist">Create Category</Link></li>
+                    <li><Link className="dropdown-item" to="/createadvertise">Create Advertisement</Link></li>
+                  </ul>
                 </li>
               </>
             )}
             <li className="nav-item active">
-              <a className="nav-link" href="/">Home</a>
+              <Link className="nav-link" to="/">Home</Link>
             </li>
             <li className="nav-item">
-              <a className="nav-link" href="#">Local News</a>
+              <Link className="nav-link" to="/category/fashion">Fashion</Link>
             </li>
-            
             <li className="nav-item">
-              <a className="nav-link" href="#">Lifestyle</a>
+              <Link className="nav-link" to="/category/entertainment">Entertainment</Link>
             </li>
-            
-            {userId && (
-  <>
-    <li className="nav-item">
-      <Link className="nav-link" to={`/profile/${userId}`}>{userName}</Link>
-    </li>
-    <li className="nav-item">
-      <button type="button" className="nav-link" onClick={logout}>Logout</button>
-    </li>
-  </>
-)}
-            
-            {!userId && (
+            <li className="nav-item">
+              <Link className="nav-link" to="/category/lifestyle">Lifestyle</Link>
+            </li>
+            <li className="nav-item">
+              <Link className="nav-link" to="/category/local">Local News</Link>
+            </li>
+            {/* <li className="nav-item">
+              <Link className="nav-link" to="/about">About</Link>
+            </li> */}
+           
+            {userId ? (
+              <>
+                <li className="nav-item">
+                  <Link className="nav-link" to={`/profile/${userId}`}>{userName}</Link>
+                </li>
+                <li className="nav-item">
+                  <button type="button" className="nav-link btn btn-link" onClick={logout}>Logout</button>
+                </li>
+              </>
+            ) : (
               <>
                 <li className="nav-item">
                   <Link className="nav-link" to="/login">Login</Link>
